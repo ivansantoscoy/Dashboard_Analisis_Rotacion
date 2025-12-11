@@ -3,6 +3,7 @@
  */
 
 import Papa from 'papaparse';
+import * as XLSX from 'xlsx';
 import type { EmpleadoRaw, EmpleadoRotacion, TipoBaja, ValidationError } from '@/types';
 import { COLUMN_MAPPING, REQUIRED_COLUMNS } from '@/utils/constants';
 import { parseDate, calcularDiferenciaDias } from '@/utils/dateUtils';
@@ -42,25 +43,85 @@ export class FileParser {
     return undefined;
   }
 
-  static async parseFile(file: File): Promise<ParseResult> {
+  /**
+   * Detecta si el archivo es Excel basándose en la extensión
+   */
+  private static isExcelFile(fileName: string): boolean {
+    const extension = fileName.toLowerCase().split('.').pop();
+    return extension === 'xlsx' || extension === 'xls';
+  }
+
+  /**
+   * Parsea un archivo Excel (.xlsx o .xls) y lo convierte a JSON
+   */
+  private static async parseExcelFile(file: File): Promise<EmpleadoRaw[]> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: 'array' });
+
+          // Leer la primera hoja
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+
+          // Convertir a JSON
+          const jsonData = XLSX.utils.sheet_to_json<EmpleadoRaw>(worksheet, {
+            raw: false, // Convertir fechas y números a strings
+            defval: '', // Valor por defecto para celdas vacías
+          });
+
+          resolve(jsonData);
+        } catch (error) {
+          reject(new Error(`Error al leer archivo Excel: ${error}`));
+        }
+      };
+
+      reader.onerror = () => {
+        reject(new Error('Error al leer el archivo'));
+      };
+
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  /**
+   * Parsea un archivo CSV usando PapaParse
+   */
+  private static async parseCSVFile(file: File): Promise<EmpleadoRaw[]> {
     return new Promise((resolve, reject) => {
       Papa.parse<EmpleadoRaw>(file, {
         header: true,
         skipEmptyLines: true,
         encoding: 'UTF-8',
         complete: (results) => {
-          try {
-            const parsed = this.processData(results.data);
-            resolve(parsed);
-          } catch (error) {
-            reject(error);
-          }
+          resolve(results.data);
         },
         error: (error) => {
-          reject(new Error(`Error al parsear archivo: ${error.message}`));
+          reject(new Error(`Error al parsear CSV: ${error.message}`));
         },
       });
     });
+  }
+
+  static async parseFile(file: File): Promise<ParseResult> {
+    try {
+      let rawData: EmpleadoRaw[];
+
+      // Detectar tipo de archivo y usar el parser apropiado
+      if (this.isExcelFile(file.name)) {
+        rawData = await this.parseExcelFile(file);
+      } else {
+        rawData = await this.parseCSVFile(file);
+      }
+
+      // Procesar los datos con la misma lógica
+      return this.processData(rawData);
+    } catch (error) {
+      throw error;
+    }
   }
 
   private static processData(rawData: EmpleadoRaw[]): ParseResult {
