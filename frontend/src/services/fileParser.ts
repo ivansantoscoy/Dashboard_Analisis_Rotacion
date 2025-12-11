@@ -26,6 +26,22 @@ export interface ParseResult {
 }
 
 export class FileParser {
+  /**
+   * Busca un valor en el objeto row usando un nombre de columna flexible
+   * (ignora mayúsculas y espacios extra)
+   */
+  private static getColumnValue(row: any, columnName: string): any {
+    const normalizedSearch = columnName.trim().toLowerCase();
+
+    for (const [key, value] of Object.entries(row)) {
+      if (key.trim().toLowerCase() === normalizedSearch) {
+        return value;
+      }
+    }
+
+    return undefined;
+  }
+
   static async parseFile(file: File): Promise<ParseResult> {
     return new Promise((resolve, reject) => {
       Papa.parse<EmpleadoRaw>(file, {
@@ -57,10 +73,23 @@ export class FileParser {
     }
 
     const columns = Object.keys(rawData[0]);
-    const missingColumns = REQUIRED_COLUMNS.filter(col => !columns.includes(col));
+
+    // Normalizar columnas para comparación (trim y sin distinción de mayúsculas)
+    const normalizedColumns = columns.map(col => col.trim());
+    const normalizedRequired = REQUIRED_COLUMNS.map(col => col.trim());
+
+    const missingColumns = normalizedRequired.filter(reqCol => {
+      return !normalizedColumns.some(col =>
+        col.toLowerCase() === reqCol.toLowerCase()
+      );
+    });
 
     if (missingColumns.length > 0) {
-      throw new Error(`Faltan columnas requeridas: ${missingColumns.join(', ')}`);
+      const foundColumns = normalizedColumns.join(', ');
+      throw new Error(
+        `Faltan columnas requeridas: ${missingColumns.join(', ')}\n\n` +
+        `Columnas encontradas en el archivo: ${foundColumns}`
+      );
     }
 
     // Procesar cada fila
@@ -100,35 +129,38 @@ export class FileParser {
     rowNumber: number,
     errors: ValidationError[]
   ): EmpleadoRotacion | null {
+    // Helper para obtener valores usando nombres flexibles
+    const getValue = (colName: string) => this.getColumnValue(row, colName);
+
     // Validar y transformar campos requeridos
-    const numeroEmpleado = row['Empleado#']?.toString().trim();
+    const numeroEmpleado = getValue('Empleado#')?.toString().trim();
     if (!numeroEmpleado) {
       errors.push({
         fila: rowNumber,
         columna: 'Empleado#',
         tipo: 'missing',
         mensaje: 'Número de empleado requerido',
-        valor: row['Empleado#'],
+        valor: getValue('Empleado#'),
       });
       return null;
     }
 
-    const nombre = row['Nombre']?.toString().trim();
+    const nombre = getValue('Nombre')?.toString().trim();
     if (!nombre) {
       errors.push({
         fila: rowNumber,
         columna: 'Nombre',
         tipo: 'missing',
         mensaje: 'Nombre requerido',
-        valor: row['Nombre'],
+        valor: getValue('Nombre'),
       });
       return null;
     }
 
     // Parsear fechas
-    const fechaBajaSistema = parseDate(row['Fecha de baja en el Sistema']);
-    const fechaUltimoDiaTrabajo = parseDate(row['Fecha de último día de trabajo (UDT)']);
-    const fechaAlta = parseDate(row['Fecha de Alta']);
+    const fechaBajaSistema = parseDate(getValue('Fecha de baja en el Sistema'));
+    const fechaUltimoDiaTrabajo = parseDate(getValue('Fecha de último día de trabajo (UDT)'));
+    const fechaAlta = parseDate(getValue('Fecha de Alta'));
 
     if (!fechaBajaSistema || !fechaUltimoDiaTrabajo || !fechaAlta) {
       errors.push({
@@ -142,12 +174,12 @@ export class FileParser {
     }
 
     // Parsear números
-    const antiguedadSemanas = this.parseNumber(row['Antigüedad en Semanas'], 0);
-    const numeroSemanaUltimasHoras = this.parseNumber(row['Número de semana de las últimas horas trabajadas'], 0);
-    const totalHorasUltimaSemana = this.parseNumber(row['Total de horas trabajadas  en la última semana'], 0);
-    const totalFaltas = this.parseNumber(row['Total de faltas'], 0);
-    const permisos = this.parseNumber(row['Permisos'], 0);
-    const salario = this.parseNumber(row['Salario'], 0);
+    const antiguedadSemanas = this.parseNumber(getValue('Antigüedad en Semanas'), 0);
+    const numeroSemanaUltimasHoras = this.parseNumber(getValue('Número de semana de las últimas horas trabajadas'), 0);
+    const totalHorasUltimaSemana = this.parseNumber(getValue('Total de horas trabajadas  en la última semana'), 0);
+    const totalFaltas = this.parseNumber(getValue('Total de faltas'), 0);
+    const permisos = this.parseNumber(getValue('Permisos'), 0);
+    const salario = this.parseNumber(getValue('Salario'), 0);
 
     if (salario <= 0) {
       errors.push({
@@ -155,24 +187,24 @@ export class FileParser {
         columna: 'Salario',
         tipo: 'out_of_range',
         mensaje: 'Salario debe ser mayor a 0',
-        valor: row['Salario'],
+        valor: getValue('Salario'),
       });
       return null;
     }
 
     // Campos opcionales
-    const fechaFiniquito = parseDate(row['Fecha en que se hizo el finiquito'] || '');
-    const fechaEntregaFiniquito = parseDate(row['Fecha de entrega de finiquito'] || '');
-    const montoFiniquito = this.parseNumber(row['Monto Finiquito'], null);
-    const ultimoCambioSalario = parseDate(row['Último cambio de salario'] || '');
+    const fechaFiniquito = parseDate(getValue('Fecha en que se hizo el finiquito') || '');
+    const fechaEntregaFiniquito = parseDate(getValue('Fecha de entrega de finiquito') || '');
+    const montoFiniquito = this.parseNumber(getValue('Monto Finiquito'), null);
+    const ultimoCambioSalario = parseDate(getValue('Último cambio de salario') || '');
 
-    const falta1 = parseDate(row['Falta 1'] || '');
-    const falta2 = parseDate(row['Falta 2'] || '');
-    const falta3 = parseDate(row['Falta 3'] || '');
-    const falta4 = parseDate(row['Falta 4'] || '');
+    const falta1 = parseDate(getValue('Falta 1') || '');
+    const falta2 = parseDate(getValue('Falta 2') || '');
+    const falta3 = parseDate(getValue('Falta 3') || '');
+    const falta4 = parseDate(getValue('Falta 4') || '');
 
     // Tipo de baja
-    const tipoBajaRaw = row['Tipo de baja en el Sistema']?.toString().trim() || '';
+    const tipoBajaRaw = getValue('Tipo de baja en el Sistema')?.toString().trim() || '';
     if (!['RV', 'RV.', 'BXF', 'BXF.'].includes(tipoBajaRaw)) {
       errors.push({
         fila: rowNumber,
@@ -186,7 +218,7 @@ export class FileParser {
     const tipoBaja = tipoBajaRaw as TipoBaja;
 
     // Boolean
-    const cumplioEntrenamientoStr = row['Cumplió con periodo de entrenamiento']?.toString() || '';
+    const cumplioEntrenamientoStr = getValue('Cumplió con periodo de entrenamiento')?.toString() || '';
     const cumplioEntrenamiento = formatBoolean(cumplioEntrenamientoStr) === 'Sí';
 
     // Campos calculados
@@ -210,7 +242,7 @@ export class FileParser {
     const empleado: EmpleadoRotacion = {
       numeroEmpleado,
       nombre,
-      departamento: row['Depto.']?.toString().trim() || undefined,
+      departamento: getValue('Depto.')?.toString().trim() || undefined,
       fechaBajaSistema,
       fechaUltimoDiaTrabajo,
       fechaAlta,
@@ -220,15 +252,15 @@ export class FileParser {
       fechaFiniquito: fechaFiniquito || undefined,
       fechaEntregaFiniquito: fechaEntregaFiniquito || undefined,
       montoFiniquito: montoFiniquito || undefined,
-      encuestaSalida4FRH209: row['Encuesta de salida 4FRH-209']?.toString().trim() || undefined,
-      razonRenunciaRH: row['Razón de Renuncia']?.toString().trim() || undefined,
-      razonCapturadaSistema: row['Razon capturada en Sistema']?.toString().trim() || undefined,
-      clase: row['Clase']?.toString().trim() || '1',
-      turno: row['Turno']?.toString().trim() || '',
+      encuestaSalida4FRH209: getValue('Encuesta de salida 4FRH-209')?.toString().trim() || undefined,
+      razonRenunciaRH: getValue('Razón de Renuncia')?.toString().trim() || undefined,
+      razonCapturadaSistema: getValue('Razon capturada en Sistema')?.toString().trim() || undefined,
+      clase: getValue('Clase')?.toString().trim() || '1',
+      turno: getValue('Turno')?.toString().trim() || '',
       tipoBaja,
-      area: row['Área']?.toString().trim() || '',
-      supervisor: row['Supervisor']?.toString().trim() || '',
-      puesto: row['Puesto']?.toString().trim() || '',
+      area: getValue('Área')?.toString().trim() || '',
+      supervisor: getValue('Supervisor')?.toString().trim() || '',
+      puesto: getValue('Puesto')?.toString().trim() || '',
       cumplioEntrenamiento,
       totalFaltas,
       permisos,
