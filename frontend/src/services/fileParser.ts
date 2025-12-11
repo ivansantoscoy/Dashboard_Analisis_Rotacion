@@ -5,13 +5,12 @@
 import Papa from 'papaparse';
 import type { EmpleadoRaw, EmpleadoRotacion, TipoBaja, ValidationError } from '@/types';
 import { COLUMN_MAPPING, REQUIRED_COLUMNS } from '@/utils/constants';
-import { parseDate } from '@/utils/dateUtils';
+import { parseDate, calcularDiferenciaDias } from '@/utils/dateUtils';
 import {
   calcularRangoSalarial,
   calcularRangoAntiguedad,
   normalizarTipoBaja,
   esRotacionTemprana,
-  calcularDiferenciaDias,
 } from '@/utils/calculations';
 import { formatBoolean } from '@/utils/formatters';
 
