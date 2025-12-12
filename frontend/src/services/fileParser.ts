@@ -251,7 +251,7 @@ export class FileParser {
       totalHorasUltimaSemana,
       fechaFiniquito: fechaFiniquito || undefined,
       fechaEntregaFiniquito: fechaEntregaFiniquito || undefined,
-      montoFiniquito: montoFiniquito || undefined,
+      montoFiniquito: montoFiniquito !== null ? montoFiniquito : undefined,
       encuestaSalida4FRH209: getValue('Encuesta de salida 4FRH-209')?.toString().trim() || undefined,
       razonRenunciaRH: getValue('Razón de Renuncia')?.toString().trim() || undefined,
       razonCapturadaSistema: getValue('Razon capturada en Sistema')?.toString().trim() || undefined,
@@ -286,15 +286,15 @@ export class FileParser {
     return empleado;
   }
 
-  private static parseNumber(value: any, defaultValue: number | null): number {
+  private static parseNumber(value: any, defaultValue: number | null): number | null {
     if (value === null || value === undefined || value === '') {
-      return defaultValue ?? 0;
+      return defaultValue;
     }
 
     const parsed = typeof value === 'string'
       ? parseFloat(value.replace(/,/g, ''))
       : Number(value);
 
-    return isNaN(parsed) ? (defaultValue ?? 0) : parsed;
+    return isNaN(parsed) ? defaultValue : parsed;
   }
 }
