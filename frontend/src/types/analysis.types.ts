@@ -76,3 +76,57 @@ export type CategoriaAnalisis =
   | 'rango_salarial'
   | 'rango_antiguedad'
   | 'cumplimiento_entrenamiento';
+
+// Tipos para análisis completo
+export interface DistribucionCategoria {
+  categoria: string;
+  total: number;
+  porcentaje: number;
+}
+
+export interface TendenciaRotacion {
+  periodo: string;
+  total_rv: number;
+  total_bxf: number;
+  total: number;
+  tasa: number;
+}
+
+export interface AnalisisPorArea {
+  area: string;
+  total_rotaciones: number;
+  porcentaje: number;
+  antiguedad_promedio: number;
+  salario_promedio: number;
+  tipo_baja_predominante: string;
+}
+
+export interface AnalisisCompleto {
+  // Métricas generales
+  total_registros: number;
+  total_renuncias_voluntarias: number;
+  total_bajas_forzadas: number;
+  tasa_rv_vs_bxf: number;
+
+  // Promedios
+  antiguedad_promedio_dias: number;
+  antiguedad_promedio_semanas: number;
+  salario_promedio: number;
+
+  // Distribuciones
+  distribucion_tipo_baja: DistribucionCategoria[];
+  distribucion_por_area: DistribucionCategoria[];
+  distribucion_por_supervisor: DistribucionCategoria[];
+  distribucion_rango_salarial: DistribucionCategoria[];
+  distribucion_rango_antiguedad: DistribucionCategoria[];
+
+  // Tendencias
+  tendencias_mensuales: TendenciaRotacion[];
+
+  // Análisis detallado
+  analisis_areas: AnalisisPorArea[];
+
+  // Rotación temprana
+  total_rotacion_temprana: number;
+  porcentaje_rotacion_temprana: number;
+}

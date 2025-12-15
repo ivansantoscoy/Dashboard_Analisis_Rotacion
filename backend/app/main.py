@@ -42,7 +42,6 @@ async def root():
         "docs": "/docs"
     }
 
-# Incluir routers cuando estén creados
-# from app.api import upload, analysis
-# app.include_router(upload.router, prefix="/api", tags=["upload"])
-# app.include_router(analysis.router, prefix="/api", tags=["analysis"])
+# Incluir routers
+from app.api import analysis
+app.include_router(analysis.router, prefix="/api", tags=["analysis"])

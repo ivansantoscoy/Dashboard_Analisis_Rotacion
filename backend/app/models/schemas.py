@@ -62,3 +62,60 @@ class MetricasResponse(BaseModel):
     tiempo_promedio_finiquito: float
     rotaciones_por_tipo: dict
     rotacion_por_mes: List[dict]
+
+
+class DistribucionCategoria(BaseModel):
+    """Distribución por categoría"""
+    categoria: str
+    total: int
+    porcentaje: float
+
+
+class TendenciaRotacion(BaseModel):
+    """Tendencia de rotación por período"""
+    periodo: str  # Mes/Año
+    total_rv: int
+    total_bxf: int
+    total: int
+    tasa: float
+
+
+class AnalisisPorArea(BaseModel):
+    """Análisis por área/departamento"""
+    area: str
+    total_rotaciones: int
+    porcentaje: float
+    antiguedad_promedio: float
+    salario_promedio: float
+    tipo_baja_predominante: str
+
+
+class AnalisisCompleto(BaseModel):
+    """Análisis completo de datos"""
+    # Métricas generales
+    total_registros: int
+    total_renuncias_voluntarias: int
+    total_bajas_forzadas: int
+    tasa_rv_vs_bxf: float  # % de RV sobre total
+
+    # Promedios
+    antiguedad_promedio_dias: float
+    antiguedad_promedio_semanas: float
+    salario_promedio: float
+
+    # Distribuciones
+    distribucion_tipo_baja: List[DistribucionCategoria]
+    distribucion_por_area: List[DistribucionCategoria]
+    distribucion_por_supervisor: List[DistribucionCategoria]
+    distribucion_rango_salarial: List[DistribucionCategoria]
+    distribucion_rango_antiguedad: List[DistribucionCategoria]
+
+    # Tendencias
+    tendencias_mensuales: List[TendenciaRotacion]
+
+    # Análisis detallado por área
+    analisis_areas: List[AnalisisPorArea]
+
+    # Rotación temprana (< 3 meses)
+    total_rotacion_temprana: int
+    porcentaje_rotacion_temprana: float
