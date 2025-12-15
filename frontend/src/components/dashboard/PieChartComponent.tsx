@@ -69,7 +69,7 @@ export function PieChartComponent({ title, data, colors = DEFAULT_COLORS }: PieC
             label={renderCustomLabel}
             outerRadius={120}
             fill="#8884d8"
-            dataKey="cantidad"
+            dataKey="total"
             nameKey="categoria"
           >
             {chartData.map((entry, index) => (
@@ -93,7 +93,7 @@ export function PieChartComponent({ title, data, colors = DEFAULT_COLORS }: PieC
             height={36}
             formatter={(value, entry: any) => (
               <span className="text-sm text-gray-700">
-                {entry.payload.categoria}: {entry.payload.cantidad}
+                {entry.payload.categoria}: {entry.payload.total}
               </span>
             )}
           />
