@@ -36,8 +36,13 @@ export function HeatmapComponent() {
     const areasSet = new Set<string>();
 
     empleadosFiltrados.forEach((emp) => {
-      const fecha = new Date(emp.fechaBajaSistema);
-      const mes = fecha.getMonth(); // 0-11
+      // Asegurarnos de que la fecha es un objeto Date válido
+      const fecha = emp.fechaBajaSistema instanceof Date
+        ? emp.fechaBajaSistema
+        : new Date(emp.fechaBajaSistema);
+
+      // Obtener el mes usando métodos UTC para evitar problemas de zona horaria
+      const mes = fecha.getUTCMonth(); // 0-11 en UTC
       const area = emp.area;
 
       areasSet.add(area);
