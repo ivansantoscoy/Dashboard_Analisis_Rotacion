@@ -4,15 +4,19 @@
 
 import { create } from 'zustand';
 import type { EmpleadoRotacion } from '@/types';
+import type { AnalisisCompleto } from '@/types/analysis.types';
+import { AnalysisService } from '@/services/api/analysisService';
 
 interface DataState {
   // Datos
   empleados: EmpleadoRotacion[];
   empleadosFiltrados: EmpleadoRotacion[];
   datasetId: string | null;
+  analisis: AnalisisCompleto | null;
 
   // Estado de carga
   isLoading: boolean;
+  isAnalyzing: boolean;
   error: string | null;
 
   // Acciones
@@ -23,6 +27,7 @@ interface DataState {
   setError: (error: string | null) => void;
   clearData: () => void;
   resetFilters: () => void;
+  analyzeData: () => Promise<void>;
 }
 
 export const useDataStore = create<DataState>((set, get) => ({
@@ -30,7 +35,9 @@ export const useDataStore = create<DataState>((set, get) => ({
   empleados: [],
   empleadosFiltrados: [],
   datasetId: null,
+  analisis: null,
   isLoading: false,
+  isAnalyzing: false,
   error: null,
 
   // Acciones
@@ -40,6 +47,8 @@ export const useDataStore = create<DataState>((set, get) => ({
       empleadosFiltrados: empleados,
       error: null,
     });
+    // Analizar automáticamente al cargar datos
+    get().analyzeData();
   },
 
   setEmpleadosFiltrados: (empleados) => {
@@ -63,13 +72,44 @@ export const useDataStore = create<DataState>((set, get) => ({
       empleados: [],
       empleadosFiltrados: [],
       datasetId: null,
+      analisis: null,
       error: null,
       isLoading: false,
+      isAnalyzing: false,
     });
   },
 
   resetFilters: () => {
     const { empleados } = get();
     set({ empleadosFiltrados: empleados });
+  },
+
+  analyzeData: async () => {
+    const { empleadosFiltrados } = get();
+
+    if (empleadosFiltrados.length === 0) {
+      set({ analisis: null });
+      return;
+    }
+
+    set({ isAnalyzing: true, error: null });
+
+    try {
+      const response = await AnalysisService.analyzeData(empleadosFiltrados);
+
+      if (response.success && response.data) {
+        set({ analisis: response.data, isAnalyzing: false });
+      } else {
+        set({
+          error: response.error?.detail || 'Error al analizar datos',
+          isAnalyzing: false,
+        });
+      }
+    } catch (error) {
+      set({
+        error: 'Error inesperado al analizar datos',
+        isAnalyzing: false,
+      });
+    }
   },
 }));

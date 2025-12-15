@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { FileParser } from './services/fileParser';
 import { useDataStore } from './stores';
 import type { EmpleadoRotacion } from './types';
+import { Dashboard } from './components/dashboard';
 
 function App() {
-  const { setEmpleados, empleados, isLoading, setLoading } = useDataStore();
+  const { setEmpleados, empleados, isLoading, setLoading, analisis, isAnalyzing } = useDataStore();
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -128,6 +129,21 @@ function App() {
             </div>
           )}
         </div>
+
+        {/* Dashboard de Análisis */}
+        {empleados.length > 0 && (
+          <div className="mt-8">
+            {isAnalyzing ? (
+              <div className="card">
+                <div className="text-center py-8">
+                  <div className="text-info text-lg">Analizando datos...</div>
+                </div>
+              </div>
+            ) : analisis ? (
+              <Dashboard />
+            ) : null}
+          </div>
+        )}
 
         <footer className="mt-8 text-center text-text-muted text-sm">
           <p>Dashboard de Análisis de Rotación v1.0.0</p>
