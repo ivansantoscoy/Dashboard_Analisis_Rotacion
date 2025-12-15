@@ -3,19 +3,36 @@
  */
 
 import { useDataStore } from '@/stores/dataStore';
+import { FilterPanel } from '@/components/filters';
 import { DashboardMetrics } from './DashboardMetrics';
 import { DistributionChart } from './DistributionChart';
 import { TrendChart } from './TrendChart';
+import { PieChartComponent } from './PieChartComponent';
+import { ScatterPlotComponent } from './ScatterPlotComponent';
+import { HeatmapComponent } from './HeatmapComponent';
 
 export function Dashboard() {
-  const { analisis, empleados } = useDataStore();
+  const { analisis, empleados, empleadosFiltrados } = useDataStore();
 
   if (empleados.length === 0) {
     return null; // No mostrar nada si no hay datos
   }
 
   return (
-    <div className="space-y-8 mt-8">
+    <div className="space-y-8">
+      {/* Panel de Filtros */}
+      <FilterPanel />
+
+      {/* Contador de registros */}
+      {empleadosFiltrados.length !== empleados.length && (
+        <div className="bg-info bg-opacity-10 border border-info rounded-lg p-4">
+          <p className="text-info font-medium">
+            Mostrando {empleadosFiltrados.length} de {empleados.length} registros
+            ({((empleadosFiltrados.length / empleados.length) * 100).toFixed(1)}% del total)
+          </p>
+        </div>
+      )}
+
       {/* Métricas principales */}
       <section>
         <h2 className="text-2xl font-bold mb-6 text-gray-800">
@@ -60,6 +77,36 @@ export function Dashboard() {
                 title="Rotaciones por Antigüedad"
                 data={analisis.distribucion_rango_antiguedad}
               />
+            </div>
+          </section>
+
+          {/* Análisis Adicionales */}
+          <section>
+            <h2 className="text-2xl font-bold mb-6 text-gray-800">
+              Análisis Adicionales
+            </h2>
+
+            {/* Gráficos de Pastel */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <PieChartComponent
+                title="Distribución RV vs BXF"
+                data={analisis.distribucion_tipo_baja}
+                colors={['#f59e0b', '#ef4444']}
+              />
+              <PieChartComponent
+                title="Distribución por Área (Top 8)"
+                data={analisis.distribucion_por_area}
+              />
+            </div>
+
+            {/* Scatter Plot */}
+            <div className="mb-6">
+              <ScatterPlotComponent />
+            </div>
+
+            {/* Heatmap */}
+            <div>
+              <HeatmapComponent />
             </div>
           </section>
 

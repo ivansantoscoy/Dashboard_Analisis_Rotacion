@@ -145,6 +145,9 @@ export const useFilterStore = create<FilterState>((set, get) => ({
       return true;
     });
 
-    useDataStore.getState().setEmpleadosFiltrados(filtrados);
+    const dataStore = useDataStore.getState();
+    dataStore.setEmpleadosFiltrados(filtrados);
+    // Re-analizar con datos filtrados
+    dataStore.analyzeData();
   },
 }));
