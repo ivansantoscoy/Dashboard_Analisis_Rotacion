@@ -10,6 +10,7 @@ import { TrendChart } from './TrendChart';
 import { PieChartComponent } from './PieChartComponent';
 import { ScatterPlotComponent } from './ScatterPlotComponent';
 import { HeatmapComponent } from './HeatmapComponent';
+import { ParetoDashboard } from './ParetoDashboard';
 
 export function Dashboard() {
   const { analisis, empleados, empleadosFiltrados } = useDataStore();
@@ -178,6 +179,11 @@ export function Dashboard() {
                 </table>
               </div>
             </div>
+          </section>
+
+          {/* Análisis Pareto 80/20 */}
+          <section>
+            <ParetoDashboard />
           </section>
         </>
       )}

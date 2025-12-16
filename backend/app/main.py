@@ -43,5 +43,6 @@ async def root():
     }
 
 # Incluir routers
-from app.api import analysis
+from app.api import analysis, pareto
 app.include_router(analysis.router, prefix="/api", tags=["analysis"])
+app.include_router(pareto.router, prefix="/api", tags=["pareto"])
