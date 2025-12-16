@@ -5,10 +5,34 @@
 import { format, parse, differenceInDays, differenceInWeeks } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-export function parseDate(dateString: string): Date | null {
-  if (!dateString || dateString.trim() === '') return null;
+export function parseDate(dateString: string | number): Date | null {
+  if (dateString === null || dateString === undefined || dateString === '') return null;
 
   try {
+    // Si es un número (serial de Excel)
+    if (typeof dateString === 'number') {
+      // Convertir número serial de Excel a fecha JavaScript
+      // Excel cuenta días desde 1/1/1900
+      // JavaScript cuenta milisegundos desde 1/1/1970
+      // Offset: 25569 días entre ambas fechas
+      const excelEpoch = new Date(1899, 11, 30); // 30 de diciembre de 1899
+      const jsDate = new Date(excelEpoch.getTime() + dateString * 86400000);
+      return jsDate;
+    }
+
+    // Convertir a string si no lo es
+    const dateStr = dateString.toString().trim();
+    if (dateStr === '') return null;
+
+    // Si parece un número como string, convertir
+    const asNumber = parseFloat(dateStr);
+    if (!isNaN(asNumber) && asNumber > 1000) {
+      // Probablemente es un serial de Excel
+      const excelEpoch = new Date(1899, 11, 30);
+      const jsDate = new Date(excelEpoch.getTime() + asNumber * 86400000);
+      return jsDate;
+    }
+
     // Intentar varios formatos comunes
     const formats = [
       'yyyy-MM-dd',
@@ -20,7 +44,7 @@ export function parseDate(dateString: string): Date | null {
 
     for (const formatStr of formats) {
       try {
-        const parsed = parse(dateString, formatStr, new Date());
+        const parsed = parse(dateStr, formatStr, new Date());
         if (!isNaN(parsed.getTime())) {
           return parsed;
         }
@@ -30,7 +54,7 @@ export function parseDate(dateString: string): Date | null {
     }
 
     // Intentar parseando como ISO
-    const isoDate = new Date(dateString);
+    const isoDate = new Date(dateStr);
     if (!isNaN(isoDate.getTime())) {
       return isoDate;
     }
