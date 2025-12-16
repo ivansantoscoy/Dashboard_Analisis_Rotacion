@@ -42,8 +42,13 @@ async def root():
         "docs": "/docs"
     }
 
+# Inicializar base de datos
+from app.db.database import init_db
+init_db()
+
 # Incluir routers
-from app.api import analysis, pareto, ml
+from app.api import analysis, pareto, ml, clientes
 app.include_router(analysis.router, prefix="/api", tags=["analysis"])
 app.include_router(pareto.router, prefix="/api", tags=["pareto"])
 app.include_router(ml.router, prefix="/api", tags=["ml"])
+app.include_router(clientes.router, prefix="/api", tags=["clientes"])

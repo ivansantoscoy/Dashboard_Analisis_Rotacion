@@ -172,3 +172,43 @@ class MLTrainingResponse(BaseModel):
     metricas: ModelMetrics
     top_features: List[FeatureImportance]
     fecha_entrenamiento: str
+
+
+# ============================================================================
+# Schemas para Gestión de Clientes
+# ============================================================================
+
+class ClienteCreate(BaseModel):
+    """Schema para crear un cliente"""
+    nombre: str = Field(..., min_length=1, max_length=200, description="Nombre de la empresa")
+    identificador: str = Field(..., min_length=1, max_length=50, description="Identificador único (ej: ABC_MFG_2024)")
+    industria: Optional[str] = Field(None, max_length=100, description="Industria o sector")
+    notas: Optional[str] = Field(None, max_length=500, description="Notas adicionales")
+
+
+class ClienteUpdate(BaseModel):
+    """Schema para actualizar un cliente"""
+    nombre: Optional[str] = Field(None, min_length=1, max_length=200)
+    industria: Optional[str] = Field(None, max_length=100)
+    notas: Optional[str] = Field(None, max_length=500)
+
+
+class ClienteResponse(BaseModel):
+    """Schema de respuesta de cliente"""
+    id: str
+    nombre: str
+    identificador: str
+    industria: Optional[str]
+    notas: Optional[str]
+    fecha_creacion: str
+    fecha_ultimo_analisis: Optional[str]
+    num_empleados_ultimo_csv: Optional[int]
+
+    class Config:
+        from_attributes = True
+
+
+class ClienteListResponse(BaseModel):
+    """Lista de clientes"""
+    clientes: List[ClienteResponse]
+    total: int
