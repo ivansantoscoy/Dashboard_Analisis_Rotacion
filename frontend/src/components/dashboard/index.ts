@@ -10,3 +10,5 @@ export { TrendChart } from './TrendChart';
 export { PieChartComponent } from './PieChartComponent';
 export { ScatterPlotComponent } from './ScatterPlotComponent';
 export { HeatmapComponent } from './HeatmapComponent';
+export { ParetoChart } from './ParetoChart';
+export { ParetoDashboard } from './ParetoDashboard';
